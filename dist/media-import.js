@@ -65,7 +65,7 @@
     })).sort((a,b)=>b.score-a.score);
   }
   function renderMedia() {
-    cards.innerHTML=mediaCards.map(x=>`<article class="card"><span class="tag">${esc(x.tag)}</span><div class="score">${x.score}<small>/100</small></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div class="metrics"><div class="metric"><b>${x.heat}</b><span>评论信号</span></div><div class="metric"><b>${esc(x.trend)}</b><span>样本来源</span></div><div class="metric"><b>${x.gap}</b><span>验证状态</span></div></div><div class="bar"><i style="width:${x.score}%"></i></div><div class="quote">“${esc(x.quote)}”</div>${x.url?`<a class="secondary" style="display:block;text-align:center;margin-top:12px;text-decoration:none" href="${esc(x.url)}" target="_blank" rel="noreferrer">查看原始笔记</a>`:''}</article>`).join('');
+    cards.innerHTML=mediaCards.map(x=>`<article class="card" data-opportunity-id="${esc(x.id)}"><span class="tag">${esc(x.tag)}</span><div class="score">${x.score}<small>/100</small></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div class="metrics"><div class="metric"><b>${x.heat}</b><span>评论信号</span></div><div class="metric"><b>${esc(x.trend)}</b><span>样本来源</span></div><div class="metric"><b>${x.gap}</b><span>验证状态</span></div></div><div class="bar"><i style="width:${x.score}%"></i></div><div class="quote">“${esc(x.quote)}”</div><button class="secondary research-trigger" data-research-id="${esc(x.id)}" style="width:100%;margin-top:12px">研究这个烦恼</button>${x.url?`<a class="secondary" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="${esc(x.url)}" target="_blank" rel="noreferrer">查看原始笔记</a>`:''}</article>`).join('');
     document.querySelector('.toolbar h2').textContent='小红书导入：正在浮现的烦恼';
     document.querySelector('.toolbar span').textContent=`${mediaCards.length} 个主题 · 笔记与评论已合并 · ${mediaCards === importedSnapshot ? '2026-11-05 导入快照' : '本地分析'}`;
   }
@@ -83,5 +83,6 @@
   document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.view==='radar'&&mediaActive)setTimeout(renderMedia,0);}));
   mediaCards = importedSnapshot;
   mediaActive = true;
+  window.DemandRadarMedia = { getCards: () => mediaCards.slice() };
   setTimeout(renderMedia, 0);
 })();
