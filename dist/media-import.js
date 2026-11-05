@@ -19,14 +19,17 @@
   // Aggregated locally from the user's latest 2026-11-05 MediaCrawler export.
   // No handles, raw comments, or access tokens are bundled in this snapshot.
   const importedSnapshot = [
-    {id:'snapshot-anxiety',tag:'小红书 · 已导入快照',title:'焦虑与心理压力：值得继续验证的生活烦恼',score:92,heat:'高',trend:'282 篇笔记',gap:'待访谈',summary:'在 282 篇相关笔记与 245 条匹配评论中出现；评论共鸣约 40,782。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-money',tag:'小红书 · 已导入快照',title:'经济与消费压力：值得继续验证的生活烦恼',score:84,heat:'高',trend:'20 篇笔记',gap:'待访谈',summary:'在 20 篇相关笔记与 156 条匹配评论中出现；评论共鸣约 34,758。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-work',tag:'小红书 · 已导入快照',title:'职场与职业选择：值得继续验证的生活烦恼',score:82,heat:'高',trend:'27 篇笔记',gap:'待访谈',summary:'在 27 篇相关笔记与 210 条匹配评论中出现；评论共鸣约 27,153。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-family',tag:'小红书 · 已导入快照',title:'家庭与照护：值得继续验证的生活烦恼',score:68,heat:'中高',trend:'16 篇笔记',gap:'待补证',summary:'在 16 篇相关笔记与 90 条匹配评论中出现；评论共鸣约 1,965。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-relationship',tag:'小红书 · 已导入快照',title:'关系与社交：值得继续验证的生活烦恼',score:66,heat:'中高',trend:'26 篇笔记',gap:'待补证',summary:'在 26 篇相关笔记与 81 条匹配评论中出现；评论共鸣约 4,965。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-health',tag:'小红书 · 已导入快照',title:'健康与睡眠：值得继续验证的生活烦恼',score:63,heat:'中高',trend:'16 篇笔记',gap:'待补证',summary:'在 16 篇相关笔记与 53 条匹配评论中出现；评论共鸣约 2,176。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-learning',tag:'小红书 · 已导入快照',title:'学习与自我成长：值得继续验证的生活烦恼',score:61,heat:'中',trend:'48 篇笔记',gap:'待补证',summary:'在 48 篇相关笔记与 65 条匹配评论中出现；评论共鸣约 1,205。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-city',tag:'小红书 · 已导入快照',title:'居住与城市生活：值得继续验证的生活烦恼',score:58,heat:'中',trend:'10 篇笔记',gap:'待补证',summary:'在 10 篇相关笔记与 34 条匹配评论中出现；评论共鸣约 2,450。',quote:'来自导入样本的匿名评论证据。',url:''}
+    {id:'snapshot-emotion',tag:'小红书 · 已导入快照',title:'睡眠与情绪恢复：焦虑、内耗、睡不着',score:92,heat:'高',trend:'71 篇笔记',gap:'待访谈',summary:'在 71 篇相关笔记与 162 条匹配评论中出现；评论共鸣约 36,277。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-debt',tag:'小红书 · 已导入快照',title:'收入与负债压力：钱不够、还款与房租',score:88,heat:'高',trend:'6 篇笔记',gap:'待访谈',summary:'在 6 篇相关笔记与 46 条匹配评论中出现；评论共鸣约 19,353。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-work',tag:'小红书 · 已导入快照',title:'职场消耗与加班：老板、同事与离职',score:79,heat:'高',trend:'13 篇笔记',gap:'待访谈',summary:'在 13 篇相关笔记与 79 条匹配评论中出现；评论共鸣约 1,795。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-job',tag:'小红书 · 已导入快照',title:'求职与失业焦虑：找工作、面试与 offer',score:77,heat:'高',trend:'10 篇笔记',gap:'待访谈',summary:'在 10 篇相关笔记与 57 条匹配评论中出现；评论共鸣约 4,715。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-parenting',tag:'小红书 · 已导入快照',title:'育儿与家庭照护：孩子、父母与照料',score:72,heat:'高',trend:'17 篇笔记',gap:'待补证',summary:'在 17 篇相关笔记与 114 条匹配评论中出现；评论共鸣约 1,968。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-social',tag:'小红书 · 已导入快照',title:'社交孤独与沟通：朋友、人际与关系维护',score:70,heat:'中高',trend:'23 篇笔记',gap:'待补证',summary:'在 23 篇相关笔记与 69 条匹配评论中出现；评论共鸣约 5,184。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-love',tag:'小红书 · 已导入快照',title:'亲密关系与婚恋：恋爱、分手与婚姻',score:69,heat:'中高',trend:'15 篇笔记',gap:'待补证',summary:'在 15 篇相关笔记与 61 条匹配评论中出现；评论共鸣约 5,012。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-career',tag:'小红书 · 已导入快照',title:'职业迷茫与转型：方向、转行与副业',score:66,heat:'中高',trend:'12 篇笔记',gap:'待补证',summary:'在 12 篇相关笔记与 50 条匹配评论中出现；评论共鸣约 1,290。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-learning',tag:'小红书 · 已导入快照',title:'学习拖延与自律：效率、专注与坚持',score:63,heat:'中',trend:'14 篇笔记',gap:'待补证',summary:'在 14 篇相关笔记与 42 条匹配评论中出现；评论共鸣约 1,394。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-health',tag:'小红书 · 已导入快照',title:'健康与身体不适：生病、疼痛与调理',score:62,heat:'中',trend:'7 篇笔记',gap:'待补证',summary:'在 7 篇相关笔记与 37 条匹配评论中出现；评论共鸣约 2,102。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-home',tag:'小红书 · 已导入快照',title:'住房与城市生活：租房、房贷与通勤',score:60,heat:'中',trend:'8 篇笔记',gap:'待补证',summary:'在 8 篇相关笔记与 33 条匹配评论中出现；评论共鸣约 2,499。',quote:'来自导入样本的匿名评论证据。',url:''}
   ];
   const esc = v => String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = v => { const m = String(v || '').replace(/,/g,'').match(/([\d.]+)\s*(万|w)?/i); return m ? Number(m[1]) * (m[2] ? 10000 : 1) : 0; };
