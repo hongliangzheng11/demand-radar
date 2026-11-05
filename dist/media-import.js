@@ -16,14 +16,17 @@
     ['健康与睡眠',['睡眠','失眠','身体','医院','生病','健康','焦虑症','抑郁','痛经']],
     ['经济与消费',['钱','工资','消费','房租','负债','穷','赚钱','买不起','经济']]
   ];
-  // Aggregated locally from the user's 2026-11-05 MediaCrawler export.
+  // Aggregated locally from the user's latest 2026-11-05 MediaCrawler export.
   // No handles, raw comments, or access tokens are bundled in this snapshot.
   const importedSnapshot = [
-    {id:'snapshot-anxiety',tag:'小红书 · 已导入快照',title:'焦虑与内耗：值得继续验证的生活烦恼',score:92,heat:'高',trend:'18 篇笔记',gap:'待访谈',summary:'在 18 篇相关笔记与 31 条直接匹配评论中出现；评论共鸣约 8,527。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-work',tag:'小红书 · 已导入快照',title:'职场与工作：值得继续验证的生活烦恼',score:78,heat:'高',trend:'4 篇笔记',gap:'待访谈',summary:'在 4 篇相关笔记与 22 条直接匹配评论中出现；评论共鸣约 4,559。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-money',tag:'小红书 · 已导入快照',title:'经济与消费：值得继续验证的生活烦恼',score:76,heat:'高',trend:'2 篇笔记',gap:'待访谈',summary:'在 2 篇相关笔记与 18 条直接匹配评论中出现；评论共鸣约 11,445。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-health',tag:'小红书 · 已导入快照',title:'健康与睡眠：值得继续验证的生活烦恼',score:62,heat:'中高',trend:'2 篇笔记',gap:'待补证',summary:'在 2 篇相关笔记与 6 条直接匹配评论中出现；评论共鸣约 52。',quote:'来自导入样本的匿名评论证据。',url:''},
-    {id:'snapshot-family',tag:'小红书 · 已导入快照',title:'家庭与照护：值得继续验证的生活烦恼',score:60,heat:'中高',trend:'1 篇笔记',gap:'待补证',summary:'在 1 篇相关笔记与 6 条直接匹配评论中出现；评论共鸣约 352。',quote:'来自导入样本的匿名评论证据。',url:''}
+    {id:'snapshot-anxiety',tag:'小红书 · 已导入快照',title:'焦虑与心理压力：值得继续验证的生活烦恼',score:92,heat:'高',trend:'282 篇笔记',gap:'待访谈',summary:'在 282 篇相关笔记与 245 条匹配评论中出现；评论共鸣约 40,782。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-money',tag:'小红书 · 已导入快照',title:'经济与消费压力：值得继续验证的生活烦恼',score:84,heat:'高',trend:'20 篇笔记',gap:'待访谈',summary:'在 20 篇相关笔记与 156 条匹配评论中出现；评论共鸣约 34,758。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-work',tag:'小红书 · 已导入快照',title:'职场与职业选择：值得继续验证的生活烦恼',score:82,heat:'高',trend:'27 篇笔记',gap:'待访谈',summary:'在 27 篇相关笔记与 210 条匹配评论中出现；评论共鸣约 27,153。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-family',tag:'小红书 · 已导入快照',title:'家庭与照护：值得继续验证的生活烦恼',score:68,heat:'中高',trend:'16 篇笔记',gap:'待补证',summary:'在 16 篇相关笔记与 90 条匹配评论中出现；评论共鸣约 1,965。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-relationship',tag:'小红书 · 已导入快照',title:'关系与社交：值得继续验证的生活烦恼',score:66,heat:'中高',trend:'26 篇笔记',gap:'待补证',summary:'在 26 篇相关笔记与 81 条匹配评论中出现；评论共鸣约 4,965。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-health',tag:'小红书 · 已导入快照',title:'健康与睡眠：值得继续验证的生活烦恼',score:63,heat:'中高',trend:'16 篇笔记',gap:'待补证',summary:'在 16 篇相关笔记与 53 条匹配评论中出现；评论共鸣约 2,176。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-learning',tag:'小红书 · 已导入快照',title:'学习与自我成长：值得继续验证的生活烦恼',score:61,heat:'中',trend:'48 篇笔记',gap:'待补证',summary:'在 48 篇相关笔记与 65 条匹配评论中出现；评论共鸣约 1,205。',quote:'来自导入样本的匿名评论证据。',url:''},
+    {id:'snapshot-city',tag:'小红书 · 已导入快照',title:'居住与城市生活：值得继续验证的生活烦恼',score:58,heat:'中',trend:'10 篇笔记',gap:'待补证',summary:'在 10 篇相关笔记与 34 条匹配评论中出现；评论共鸣约 2,450。',quote:'来自导入样本的匿名评论证据。',url:''}
   ];
   const esc = v => String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = v => { const m = String(v || '').replace(/,/g,'').match(/([\d.]+)\s*(万|w)?/i); return m ? Number(m[1]) * (m[2] ? 10000 : 1) : 0; };
