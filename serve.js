@@ -12,6 +12,22 @@ const types = {'.html':'text/html; charset=utf-8','.js':'application/javascript;
 
 http.createServer((req, res) => {
   const pathname = decodeURIComponent((req.url || '/').split('?')[0]);
+  if (pathname === '/api/local-model') {
+    const allowedOrigins = [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
+    if (req.method !== 'POST' || !allowedOrigins.includes(req.headers.origin) || req.headers['content-type'] !== 'application/json') { res.writeHead(403); return res.end('Forbidden'); }
+    let body = ''; req.setEncoding('utf8');
+    req.on('data', chunk => { body += chunk; if (body.length > 150000) req.destroy(); });
+    req.on('end', async () => {
+      try {
+        const {model, messages} = JSON.parse(body);
+        if (typeof model !== 'string' || !/^[a-zA-Z0-9_.:/-]{1,100}$/.test(model) || !Array.isArray(messages) || messages.length !== 2 || messages.some((m,i)=>m?.role !== ['system','user'][i] || typeof m.content !== 'string' || m.content.length > 30000)) throw Error('本地模型请求格式不正确。');
+        const response = await fetch('http://127.0.0.1:11434/api/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages,format:'json',stream:false,think:false,options:{num_ctx:8192,temperature:0.2}}),signal:AbortSignal.timeout(600000)});
+        const result = await response.text();
+        res.writeHead(response.status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}); res.end(result);
+      } catch (err) { res.writeHead(503, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}); res.end(JSON.stringify({error:'无法连接本机 Ollama，请确认已启动并下载所选模型。'})); }
+    });
+    return;
+  }
   if (pathname === '/api/ai-analysis') {
     const origin = req.headers.origin;
     if (req.method !== 'POST' || ![`http://127.0.0.1:${port}`, `http://localhost:${port}`].includes(origin) || req.headers['content-type'] !== 'application/json') { res.writeHead(403); return res.end('Forbidden'); }
