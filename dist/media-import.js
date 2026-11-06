@@ -136,6 +136,7 @@
     }
     mediaCards=makeCards(notes,comments,platform); mediaActive=true; searchQuery='';
     result.innerHTML=`<div class="detail" style="margin-top:20px"><div class="evidence"><h4>已识别真实数据</h4><p class="hint">${notes.length} 篇内容 · ${comments.length} 条评论 · 已按内容 ID 合并。原始昵称不展示，文件不上传到服务器。</p></div><div class="evidence"><h4>机会分说明</h4><p class="hint">综合主题频次、评论点赞共鸣和内容互动量，用于排序，不代表平台整体热度。</p></div></div>`;
+    window.dispatchEvent(new CustomEvent('radar:import', {detail:{notes, comments, platform}}));
     radarNav.click(); renderMedia();
   }
   async function importMedia(files) {

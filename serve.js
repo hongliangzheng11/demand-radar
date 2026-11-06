@@ -2,6 +2,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
+const dns = require('dns').promises;
+const net = require('net');
+const https = require('https');
 
 const root = path.join(__dirname, 'dist');
 const port = 4174;
@@ -9,6 +12,33 @@ const types = {'.html':'text/html; charset=utf-8','.js':'application/javascript;
 
 http.createServer((req, res) => {
   const pathname = decodeURIComponent((req.url || '/').split('?')[0]);
+  if (pathname === '/api/ai-analysis') {
+    const origin = req.headers.origin;
+    if (req.method !== 'POST' || ![`http://127.0.0.1:${port}`, `http://localhost:${port}`].includes(origin) || req.headers['content-type'] !== 'application/json') { res.writeHead(403); return res.end('Forbidden'); }
+    let body = ''; req.setEncoding('utf8');
+    req.on('data', chunk => { body += chunk; if (body.length > 150000) req.destroy(); });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body), target = new URL(payload.url);
+        if (target.protocol !== 'https:' || target.username || target.password || net.isIP(target.hostname) || target.hostname === 'localhost' || target.hostname.endsWith('.localhost') || target.hostname.endsWith('.local')) throw Error('API 地址必须是公网 HTTPS 域名。');
+        const addresses = await dns.lookup(target.hostname, {all:true});
+        if (!addresses.length || addresses.some(({address,family}) => family === 6 ? !/^[23][0-9a-f]{0,3}:/i.test(address) : /^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|2(?:2[4-9]|3\d|4\d|5[0-5])\.)/.test(address))) throw Error('API 地址不能指向本机或内网。');
+        if (typeof payload.key !== 'string' || !payload.key || typeof payload.request !== 'object') throw Error('请求格式不正确。');
+        const result = await new Promise((resolve, reject) => {
+          const address = addresses[0];
+          const upstream = https.request(target, {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${payload.key}`}, lookup:(_host,_options,callback)=>callback(null,address.address,address.family), timeout:120000}, response=>{
+            let chunks='', size=0; response.setEncoding('utf8');
+            response.on('data', chunk=>{size+=chunk.length;if(size>2_000_000){upstream.destroy(Error('响应过大。'));return;}chunks+=chunk;});
+            response.on('end',()=>resolve({status:response.statusCode,body:chunks}));
+          });
+          upstream.on('timeout',()=>upstream.destroy(Error('请求超时。'))); upstream.on('error',reject);
+          upstream.end(JSON.stringify(payload.request));
+        });
+        res.writeHead(result.status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}); res.end(result.body);
+      } catch (err) { res.writeHead(400, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}); res.end(JSON.stringify({error:err.message})); }
+    });
+    return;
+  }
   if (pathname === '/api/sqlite-import') {
     if (req.method !== 'GET' || (req.headers.origin && req.headers.origin !== `http://127.0.0.1:${port}` && req.headers.origin !== `http://localhost:${port}`)) {
       res.writeHead(403); return res.end('Forbidden');
