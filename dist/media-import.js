@@ -34,7 +34,7 @@
   const esc = v => String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = v => { const m = String(v || '').replace(/,/g,'').match(/([\d.]+)\s*(万|w)?/i); return m ? Number(m[1]) * (m[2] ? 10000 : 1) : 0; };
 
-  function csv(text) {
+  function parseCsv(text) {
     const rows=[]; let row=[], cell='', quoted=false;
     for(let i=0;i<text.length;i++) { const ch=text[i], nx=text[i+1];
       if(ch==='"' && quoted && nx==='"') { cell+='"'; i++; }
@@ -47,22 +47,73 @@
     const head=(rows.shift()||[]).map(x=>x.replace(/^\uFEFF/,'').trim());
     return rows.map(r=>Object.fromEntries(head.map((h,i)=>[h,(r[i]||'').trim()])));
   }
-  function makeCards(notes, comments) {
-    const results = themes.map(([name, words]) => {
-      const noteMatches=notes.filter(x=>words.some(w=>`${x.title} ${x.desc} ${x.tag_list}`.includes(w)));
-      const commentMatches=comments.filter(x=>words.some(w=>String(x.content).includes(w)));
-      const noteIds=new Set(noteMatches.map(x=>x.note_id));
-      const linked=comments.filter(x=>noteIds.has(x.note_id));
-      const all=[...commentMatches,...linked];
-      const resonance=all.reduce((t,x)=>t+num(x.like_count),0);
+  function parseMediaFile(name, text) {
+    const trimmed = text.replace(/^\uFEFF/, '').trim();
+    if (/\.jsonl$/i.test(name)) {
+      try {
+        return trimmed.split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
+      } catch {
+        throw new Error(`${name} 不是有效的 JSONL 文件。`);
+      }
+    }
+    const looksLikeJson = /\.json$/i.test(name) || trimmed.startsWith('[') || trimmed.startsWith('{');
+    if (!looksLikeJson) return parseCsv(text);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      throw new Error(`${name} 不是有效的 JSON 文件。`);
+    }
+    const rows = Array.isArray(parsed) ? parsed : [parsed];
+    if (!rows.every(row => row && typeof row === 'object' && !Array.isArray(row))) {
+      throw new Error(`${name} 需要是由对象组成的 JSON 数组。`);
+    }
+    return rows;
+  }
+  function normalizeNotes(rows) {
+    return rows.map(row => ({
+      ...row,
+      note_id: row.note_id ?? row.aweme_id ?? row.video_id ?? row.content_id ?? row.item_id ?? row.id,
+      title: row.title ?? row.desc ?? row.content ?? '',
+      desc: row.desc ?? row.content ?? row.title ?? '',
+      tag_list: row.tag_list ?? row.tags ?? '',
+      note_url: row.note_url ?? row.video_url ?? row.url ?? ''
+    })).filter(row => row.note_id != null);
+  }
+  function normalizeComments(rows) {
+    return rows.map(row => ({
+      ...row,
+      comment_id: row.comment_id ?? row.id,
+      note_id: row.note_id ?? row.aweme_id ?? row.video_id ?? row.content_id ?? row.item_id ?? row.target_id,
+      content: row.content ?? row.comment_text ?? row.text ?? ''
+    })).filter(row => row.comment_id != null && row.content);
+  }
+  function makeCards(notes, comments, platform = '媒体') {
+    const assignTheme = text => {
+      const value = String(text || '').toLowerCase();
+      let best = -1, bestScore = 0;
+      themes.forEach(([, words], index) => {
+        const score = words.reduce((sum, word) => sum + (value.includes(word.toLowerCase()) ? 1 : 0), 0);
+        if (score > bestScore) { best = index; bestScore = score; }
+      });
+      return best;
+    };
+    const noteGroups = themes.map(() => []), commentGroups = themes.map(() => []);
+    notes.forEach(note => { const i = assignTheme(`${note.title} ${note.desc} ${note.tag_list}`); if (i >= 0) noteGroups[i].push(note); });
+    comments.forEach(comment => { const i = assignTheme(comment.content); if (i >= 0) commentGroups[i].push(comment); });
+    const results = themes.map(([name, words], index) => {
+      const noteMatches=noteGroups[index];
+      const commentMatches=commentGroups[index];
+      const resonance=commentMatches.reduce((t,x)=>t+num(x.like_count),0);
       const engagement=noteMatches.reduce((t,x)=>t+num(x.liked_count)+num(x.collected_count)*1.5+num(x.comment_count)*2+num(x.share_count)*2,0);
       const signal=noteMatches.length*8+commentMatches.length*1.5+Math.min(18,Math.log10(resonance+1)*4)+Math.min(20,Math.log10(engagement+1)*4);
-      const evidence=all.filter(x=>x.content&&x.content.length>=6).sort((a,b)=>num(b.like_count)-num(a.like_count))[0];
-      return {name,words,noteMatches,commentMatches,resonance,signal,evidence};
+      const evidence=commentMatches.filter(x=>x.content&&x.content.length>=6).sort((a,b)=>num(b.like_count)-num(a.like_count))[0];
+      return {name,words,index,noteMatches,commentMatches,resonance,signal,evidence};
     }).filter(x=>x.noteMatches.length||x.commentMatches.length);
     const max=Math.max(...results.map(x=>x.signal),1);
     return results.map((x,i)=>({
-      id:`media-${i}`,tag:'小红书 · 真实导入',title:`${x.name}：值得继续验证的生活烦恼`,
+      id:`media-${x.index}`,tag:`${platform} · 真实导入`,title:`${x.name}：值得继续验证的生活烦恼`,
       score:Math.min(95,Math.max(52,Math.round(52+x.signal/max*40))),
       heat:x.commentMatches.length>=15?'高':x.commentMatches.length>=5?'中高':'中', trend:`${x.noteMatches.length} 篇笔记`, gap:x.commentMatches.length>=10?'待访谈':'待补证',
       summary:`在 ${x.noteMatches.length} 篇相关笔记与 ${x.commentMatches.length} 条直接匹配评论中出现；评论共鸣约 ${Math.round(x.resonance).toLocaleString()}。`,
@@ -70,26 +121,75 @@
       url:x.noteMatches[0] ? String(x.noteMatches[0].note_url||'').split('?')[0] : ''
     })).sort((a,b)=>b.score-a.score);
   }
+  let searchQuery = '';
   function renderMedia() {
-    cards.innerHTML=mediaCards.map(x=>`<article class="card" data-opportunity-id="${esc(x.id)}"><span class="tag">${esc(x.tag)}</span><div class="score">${x.score}<small>/100</small></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div class="metrics"><div class="metric"><b>${x.heat}</b><span>评论信号</span></div><div class="metric"><b>${esc(x.trend)}</b><span>样本来源</span></div><div class="metric"><b>${x.gap}</b><span>验证状态</span></div></div><div class="bar"><i style="width:${x.score}%"></i></div><div class="quote">“${esc(x.quote)}”</div><button class="secondary research-trigger" data-research-id="${esc(x.id)}" style="width:100%;margin-top:12px">研究这个烦恼</button>${x.url?`<a class="secondary" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="${esc(x.url)}" target="_blank" rel="noreferrer">查看原始笔记</a>`:''}</article>`).join('');
+    const visible = mediaCards.filter(x => `${x.title} ${x.summary} ${x.quote} ${x.tag}`.toLowerCase().includes(searchQuery));
+    cards.innerHTML=visible.map(x=>`<article class="card" data-opportunity-id="${esc(x.id)}"><span class="tag">${esc(x.tag)}</span><div class="score">${x.score}<small>/100</small></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div class="metrics"><div class="metric"><b>${x.heat}</b><span>评论信号</span></div><div class="metric"><b>${esc(x.trend)}</b><span>样本来源</span></div><div class="metric"><b>${x.gap}</b><span>验证状态</span></div></div><div class="bar"><i style="width:${x.score}%"></i></div><div class="quote">“${esc(x.quote)}”</div><button class="secondary research-trigger" data-research-id="${esc(x.id)}" style="width:100%;margin-top:12px">研究这个烦恼</button>${x.url?`<a class="secondary" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="${esc(x.url)}" target="_blank" rel="noreferrer">查看原始笔记</a>`:''}</article>`).join('') || '<p class="hint">没有匹配的烦恼，请尝试其他关键词。</p>';
     document.querySelector('.toolbar h2').textContent='小红书导入：正在浮现的烦恼';
-    document.querySelector('.toolbar span').textContent=`${mediaCards.length} 个主题 · 笔记与评论已合并 · ${mediaCards === importedSnapshot ? '2026-11-05 导入快照' : '本地分析'}`;
+    document.querySelector('.toolbar span').textContent=`${visible.length} 个主题 · ${mediaCards === importedSnapshot ? '2026-11-05 导入快照' : '本地分析'}`;
   }
-  async function importMedia(files) {
-    const parsed=await Promise.all([...files].map(async f=>({name:f.name,rows:csv(await f.text())})));
-    const content=parsed.find(x=>x.rows[0]&&'note_id' in x.rows[0]&&('title' in x.rows[0]||'desc' in x.rows[0]));
-    const comments=parsed.find(x=>x.rows[0]&&'comment_id' in x.rows[0]&&'content' in x.rows[0]);
-    if(!content||!comments)throw new Error('请选择同时包含 title/desc 的笔记 CSV 与包含 comment_id/content 的评论 CSV。');
-    mediaCards=makeCards(content.rows,comments.rows); mediaActive=true;
-    result.innerHTML=`<div class="detail" style="margin-top:20px"><div class="evidence"><h4>已识别真实数据</h4><p class="hint">${content.rows.length} 篇笔记 · ${comments.rows.length} 条评论 · 通过 note_id 合并。原始昵称不展示，文件不上传到服务器。</p></div><div class="evidence"><h4>机会分说明</h4><p class="hint">综合主题频次、评论点赞共鸣和笔记互动量，用于排序，不代表平台整体热度。</p></div></div>`;
+  function showImportedMedia(contentRows, commentRows, platform = '媒体') {
+    const notes = [...new Map(normalizeNotes(contentRows).map(row => [String(row.note_id), row])).values()];
+    const comments = [...new Map(normalizeComments(commentRows).map(row => [String(row.comment_id), row])).values()];
+    if (!notes.length || !comments.length) {
+      throw new Error('数据中没有可用的内容或评论记录。内容需有 id/title/desc，评论需有 id/content。');
+    }
+    mediaCards=makeCards(notes,comments,platform); mediaActive=true; searchQuery='';
+    result.innerHTML=`<div class="detail" style="margin-top:20px"><div class="evidence"><h4>已识别真实数据</h4><p class="hint">${notes.length} 篇内容 · ${comments.length} 条评论 · 已按内容 ID 合并。原始昵称不展示，文件不上传到服务器。</p></div><div class="evidence"><h4>机会分说明</h4><p class="hint">综合主题频次、评论点赞共鸣和内容互动量，用于排序，不代表平台整体热度。</p></div></div>`;
     radarNav.click(); renderMedia();
   }
+  async function importMedia(files) {
+    const parsed=await Promise.all([...files].map(async f=>({name:f.name,rows:parseMediaFile(f.name,await f.text())})));
+    const content=parsed.find(x=>x.rows.some(row => row && !('comment_id' in row) && ('title' in row || 'desc' in row)));
+    const comments=parsed.find(x=>x.rows.some(row => row && 'comment_id' in row && 'content' in row));
+    if(!content||!comments)throw new Error('请选择同时包含 title/desc 的内容 JSON/CSV 与包含 comment_id/content 的评论 JSON/CSV。');
+    showImportedMedia(content.rows,comments.rows,'媒体');
+  }
+  async function importCrawlerRun(source) {
+    const url = new URL(source);
+    if (!['127.0.0.1','localhost'].includes(url.hostname) || url.pathname !== '/api/crawler/radar-export') {
+      throw new Error('只允许导入本机 MediaCrawler 的本次任务数据。');
+    }
+    const response = await fetch(url.toString());
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.detail || '无法读取本次爬取结果。');
+    showImportedMedia(payload.contents || [], payload.comments || [], payload.platform || '媒体');
+  }
   document.querySelector('#chooseFile').onclick=()=>input.click();
+  document.querySelector('#importSqlite').onclick = async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    result.textContent = '正在读取本机数据库…';
+    try {
+      const response = await fetch('/api/sqlite-import', {cache: 'no-store'});
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || '读取数据库失败');
+      showImportedMedia(payload.contents || [], payload.comments || [], payload.platform);
+    } catch (err) {
+      result.innerHTML = `<p class="hint" style="color:#b6412e;margin-top:18px">导入失败：${esc(err.message)}</p>`;
+    } finally { button.disabled = false; }
+  };
+  document.querySelector('#searchForm').onsubmit = e => {
+    if (!mediaActive) return;
+    e.preventDefault();
+    searchQuery = document.querySelector('#query').value.trim().toLowerCase();
+    radarNav.click();
+    renderMedia();
+  };
   input.onchange=async e=>{try{await importMedia(e.target.files);}catch(err){result.innerHTML=`<p class="hint" style="color:#b6412e;margin-top:18px">导入失败：${esc(err.message)}</p>`;}};
   document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.view==='radar'&&mediaActive)setTimeout(renderMedia,0);}));
   mediaCards = importedSnapshot;
   mediaActive = true;
   window.DemandRadarMedia = { getCards: () => mediaCards.slice() };
   setTimeout(renderMedia, 0);
+  const crawlerSource = new URLSearchParams(window.location.search).get('source');
+  if (crawlerSource) {
+    result.innerHTML = '<p class="hint" style="margin-top:18px">正在导入本次爬取的数据…</p>';
+    importCrawlerRun(crawlerSource)
+      .then(() => window.history.replaceState({}, '', window.location.pathname))
+      .catch(err => {
+        result.innerHTML = `<p class="hint" style="color:#b6412e;margin-top:18px">自动导入失败：${esc(err.message)}</p>`;
+        document.querySelector('[data-view="import"]').click();
+      });
+  }
 })();
-

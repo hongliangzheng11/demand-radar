@@ -53,4 +53,3 @@
   $('#newProject').onclick = () => { const p={id:'research-'+Date.now(),title:'未命名问题',status:'待验证',hypothesis:'',audience:'',evidence:'',nextStep:'',conclusion:'',updatedAt:'刚创建'}; projects.unshift(p); activeId=p.id; save(); renderAll(); };
   renderAll();
 })();
-
